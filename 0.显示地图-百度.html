@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>百度地图 Demo</title>
+    <meta charset="utf-8">
+    <style type="text/css">
+      body { padding: 0; margin: 0; }
+      html, body, #map { height: 100%; }
+      #param-test { position: absolute; z-index: 999; left: 10px; top: 10px; background: white; padding: 0 3px; line-height: 28px; font-size: 14px }
+      #url-input {  width: 450px; height: 18px; margin-bottom: 3px; }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.2/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.2/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/gcoord@0.3.2/dist/gcoord.js"></script>
+  </head>
+  <body>
+    <div id="map" />
+  </body>
+  <script type="text/javascript">
+
+    L.Projection.BaiduMercator = L.Util.extend({}, L.Projection.Mercator)
+
+    L.CRS.Baidu = L.Util.extend({}, L.CRS.Earth, {
+      code: 'EPSG:Baidu',
+      projection: L.Projection.BaiduMercator,
+      transformation: new L.transformation(1, 0.5, -1, 0.5),
+      scale: function (zoom) { return 1 / Math.pow(2, (18 - zoom)) },
+      zoom: function (scale) { return 18 - Math.log(1 / scale) / Math.LN2 },
+      wrapLng: undefined
+    })
+
+    L.TileLayer.BaiDuTileLayer = L.TileLayer.extend({
+      initialize: function (param, options) {
+        var templateUrl = "http://maponline{s}.bdimg.com/tile/?x={x}&y={y}&z={z}&&"
+        var otherUrl = "qt=vtile&styles=pl&showtext=1&scaler=2&v=083" // 电子地图，图形 + 注记
+        var myUrl = templateUrl + otherUrl
+        options = L.extend({
+          getUrlArgs: (o) => { return { x: o.x, y: (-1 - o.y), z: o.z } },
+          p: param, subdomains: "0123", minZoom: 0, maxZoom: 23, minNativeZoom: 1, maxNativeZoom: 18
+        }, options)
+        L.TileLayer.prototype.initialize.call(this, myUrl, options)
+      },
+      getTileUrl: function (coords) {
+        if (this.options.getUrlArgs) {
+          return L.Util.template(this._url, L.extend({ s: this._getSubdomain(coords), r: L.Browser.retina ? '@2x' : '' }, this.options.getUrlArgs(coords), this.options))
+        } else {
+          return L.TileLayer.prototype.getTileUrl.call(this, coords)
+        }
+      },
+      _setZoomTransform: function (level, center, zoom) {
+        center = L.latLng(gcoord.transform([center.lng, center.lat], gcoord.WGS84, gcoord.BD09).reverse()) // 采用 gcoord 库进行纠偏
+        L.TileLayer.prototype._setZoomTransform.call(this, level, center, zoom)
+      },
+      _getTiledPixelBounds: function (center) {
+        center = L.latLng(gcoord.transform([center.lng, center.lat], gcoord.WGS84, gcoord.BD09).reverse()) // 采用 gcoord 库进行纠偏
+        return L.TileLayer.prototype._getTiledPixelBounds.call(this, center)
+      }
+    })
+
+    // 创建图层
+    L.tileLayer.baiDuTileLayer = function (param, options) { return new L.TileLayer.BaiDuTileLayer(param, options) }
+    myLayer = L.tileLayer.baiDuTileLayer()
+
+    // 创建map，并叠加
+    var map = L.map("map", {
+        crs: L.CRS.Baidu
+    })
+    
+    map.setView([22.817, 108.366], 12);
+
+    // 添加南宁标记
+    var marker = L.marker([22.817, 108.366]).addTo(map);
+    marker.bindPopup("<b>广西南宁</b>");
+    marker.bindTooltip("<b>广西南宁市</b>")
+
+    map.addLayer(myLayer)
+
+  </script>
+</html>
