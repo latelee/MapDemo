@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>高德地图 Demo</title>
+    <link rel="stylesheet" href="mymap/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<script src="mymap/leaflet/dist/leaflet.js"></script>
+
+<!-- 本地geojson，直接引入-->
+<script src="mymap/data/china.js"></script>
+<script src="mymap/data/china_simple.js"></script>
+<script src="mymap/data/gxData.js"></script>
+<script src="mymap/data/naningData.js"></script>
+
+
+<body>
+    <div id="map"></div>
+</body>
+
+
+<script type="text/javascript">
+
+const myStyle1 = {
+    color: "#111111",  // 灰色边框
+    weight: 1, 
+    opcacity: 0.3, 
+    fillColor: 'transparent',  // 无填充色
+    fillOpacity: 0,
+};
+
+const myStyle2 = {
+    color: "#0000ff", // 蓝色边框
+    weight: 1, 
+    opcacity: 0.3, 
+    fillColor: 'transparent', 
+    fillOpacity: 0,
+    dashArray: "10, 10", // 边框虚线
+};
+
+const myStyle3 = {
+    color: "#ff00ff",  // 紫色边框
+    weight: 2, 
+    opcacity: 0.3, 
+    fillColor: '#cccccc',  // 有填充颜色
+    fillOpacity: 1,
+};
+
+const myStyleRed = {
+    color: "#ff0000",  // 红色边框
+    weight: 2, 
+    opcacity: 0.3, 
+    fillColor: 'transparent',  // 有填充颜色
+    fillOpacity: 1,
+};
+
+function main() {
+    // 初始化地图
+    var mymap = L.map('map').setView([22.817, 108.366], 8);
+
+    var gaodeUrl = "http://webrd02.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}";
+        
+    // 添加高德地图图层
+    mapLayer = L.tileLayer(gaodeUrl, {
+        maxZoom: 18,
+        minZoom: 3,
+        attribution: '高德地图'
+    })
+    
+    // 添加高德在线地图图层
+    // mapLayer.addTo(mymap);
+        
+    var marker = L.marker([22.817, 108.366]).addTo(mymap);
+    marker.bindPopup("<b>广西南宁</b>");
+    marker.bindTooltip("<b>广西南宁市</b>")
+    showBoundray(mymap) // 显示边界和轮廓图
+}
+
+function getProvLayer(geoProv, map, style1) {
+    L.geoJSON(geoProv,
+    {
+        style: style1,
+        onEachFeature: function(feature, layer) {
+            // 添加城市名称
+            if (feature.properties && feature.properties.name) {
+                layer.bindTooltip(feature.properties.name, {
+                    permanent: false,
+                    direction: 'center',
+                    className: 'city-label'
+                });
+            }
+        }
+    }).addTo(map)
+}
+
+function showBoundray(map) {
+    // 先全国各省
+    getProvLayer(geoJsonChina, map, myStyle1)
+    // 再到广西
+    getProvLayer(gxData, map, myStyle2)
+    // 再到南宁
+    getProvLayer(naningData, map, myStyle3)
+    // 全国轮廓，最后叠加，红色显示
+    getProvLayer(geoJsonChinaSimple, map, myStyleRed)
+}
+
+// last....
+main();
+
+</script>
+
+</html>
