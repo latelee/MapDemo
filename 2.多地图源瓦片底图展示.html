@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>多地图源瓦片底图展示</title>
+    <link rel="stylesheet" href="mymap/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<script src="mymap/leaflet/dist/leaflet.js"></script>
+
+<!-- 本地geojson，直接引入-->
+<script src="mymap/data/china.js"></script>
+<script src="mymap/data/china_simple.js"></script>
+<script src="mymap/data/gxData.js"></script>
+<script src="mymap/data/naningData.js"></script>
+
+
+<body>
+    <div id="map"></div>
+</body>
+
+
+<script type="text/javascript">
+
+const myStyle1 = {
+    color: "#111111",  // 灰色边框
+    weight: 1, 
+    opcacity: 0.3, 
+    fillColor: 'transparent',  // 无填充色
+    fillOpacity: 0,
+};
+
+const myStyle2 = {
+    color: "#0000ff", // 蓝色边框
+    weight: 1, 
+    opcacity: 0.3, 
+    fillColor: 'transparent', 
+    fillOpacity: 0,
+    dashArray: "10, 10", // 边框虚线
+};
+
+const myStyle3 = {
+    color: "#ff00ff",  // 紫色边框
+    weight: 2, 
+    opcacity: 0, 
+    // fillColor: '#cccccc',  // 有填充颜色
+    fillOpacity: 0,
+};
+
+const myStyleRed = {
+    color: "#ff0000",  // 红色边框
+    weight: 2, 
+    opcacity: 0.3, 
+    fillColor: 'transparent',  // 有填充颜色
+    fillOpacity: 1,
+};
+
+var defaultLatlng = [22.817, 108.366]
+var defaultZoom = 8
+
+function main() {
+    // 高德地图图层定义
+    var url = 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}'
+    // 可指定其它默认形式
+    // url = './mapdata/gaode_tiles/{z}/{x}/{y}.png' // 离线地图
+    // url = '' // 轮廓图
+    var gaodeNormal = new L.tileLayer(url, {
+        subdomains: ['1', '2', '3', '4'],
+        attribution: '&copy; <a href="https://ditu.amap.com/">高德地图</a>'
+    });
+    // 初始化地图
+    mymap = new L.Map('map', {zoomControl: false})
+    mymap.setView(defaultLatlng, defaultZoom)
+
+    // 默认加载高德普通地图
+    gaodeNormal.addTo(mymap);
+
+    var {baseLayers,overlays}  = getMultiLayers()
+
+    // 添加图层控制，右上角
+    L.control.layers(baseLayers, overlays, {
+        collapsed: true,
+        position: 'topright'
+    }).addTo(mymap);
+
+    // 但定义一个缩放控件，在右下角
+    var zoomControl = L.control.zoom({position:'bottomright'});
+    mymap.addControl(zoomControl);
+
+    var marker = L.marker(defaultLatlng).addTo(mymap);
+    marker.bindPopup("<b>广西南宁</b>");
+    marker.bindTooltip("<b>广西南宁市</b>")
+
+    showBoundray(mymap) // 显示边界和轮廓图
+}
+
+function getProvLayer(geoProv, map, style1) {
+    L.geoJSON(geoProv,
+    {
+        style: style1,
+        onEachFeature: function(feature, layer) {
+            // 添加城市名称
+            if (feature.properties && feature.properties.name) {
+                layer.bindTooltip(feature.properties.name, {
+                    permanent: false,
+                    direction: 'center',
+                    className: 'city-label'
+                });
+            }
+        }
+    }).addTo(map)
+}
+
+function showBoundray(map) {
+    // 先全国各省
+    getProvLayer(geoJsonChina, map, myStyle1)
+    // 再到广西
+    getProvLayer(gxData, map, myStyle2)
+    // 再到南宁
+    getProvLayer(naningData, map, myStyle3)
+    // 全国轮廓，最后叠加，红色显示
+    getProvLayer(geoJsonChinaSimple, map, myStyleRed)
+}
+
+// 获取多个图层
+function getMultiLayers() {
+    // 高德地图图层定义
+    var gaodeNormal = new L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+        preferCanvas: true, //使用canvas模式渲染矢量图形
+        maxZoom: 18,
+        minZoom: 1,
+        subdomains: ['1', '2', '3', '4'], // webrd0{s}中的's'，即子域名，也可理解为随机数
+        attribution: '&copy; <a href="https://ditu.amap.com/">高德地图</a>'
+    });
+
+    var gaodeRoadOnly = new L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+        subdomains: ['1', '2', '3', '4'],
+        preferCanvas: true, maxZoom: 18, minZoom: 1,
+        attribution: '&copy; <a href="https://ditu.amap.com/">高德道路地图</a>'
+    });
+
+    var gaodeMap11 = new L.tileLayer('http://wprd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}', {
+        subdomains: ['1', '2', '3', '4'],
+        preferCanvas: true, maxZoom: 18, minZoom: 1,
+        attribution: '&copy; <a href="https://ditu.amap.com/">高德卫星地图</a>'
+    });
+
+    var gaodeSatellite = new L.tileLayer('https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}', {
+        subdomains: ['1', '2', '3', '4'],
+        preferCanvas: true, maxZoom: 18, minZoom: 1,
+        attribution: '&copy; <a href="https://ditu.amap.com/">高德卫星地图</a>'
+    });
+
+    var gaodeTile = new L.tileLayer('./mapdata/gaode_tiles/{z}/{x}/{y}.png', {
+        preferCanvas: true, maxZoom: 18, minZoom: 1,
+        attribution:'<b style="color:#dddddd">' + '高德地图离线瓦片数据源' + '</b>'
+    });
+
+    var mapTileNone = new L.TileLayer("", {
+        preferCanvas: true, maxZoom: 18, minZoom: 1,
+        attribution:'<b style="color:#dddddd">' + '轮廓图' + '</b>'
+    });
+    
+    var mapTile33 = new L.TileLayer("http://online{s}.map.bdimg.com/onlinelabel/?qt=tile&x={x}&y={y}&z={z}", {
+        subdomains: ['1', '2', '3', '4'],
+        preferCanvas: true, maxZoom: 18, minZoom: 1,
+        attribution:'百度地图'
+    });
+
+
+    var mapTile11 = new L.TileLayer("https://rt1.map.gtimg.com/tile?z={z}&x={x}&y={-y}&styleid=0&version=256", {
+        preferCanvas: true, maxZoom: 18, minZoom: 1,
+        attribution:'腾讯电子地图'
+    });
+
+    var mapTile22 = new L.TileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}", {
+        preferCanvas: true, maxZoom: 18, minZoom: 1,
+        attribution:'地形渲染图'
+    });    
+
+    // 其他地图源作为备选
+    // var openStreetMap = new L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    //     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    // });
+
+    // 叠加层定义
+    var trafficLayer = new L.tileLayer('https://tm.amap.com/trafficengine/mapabc/traffictile?v=1.0&t=1&x={x}&y={y}&z={z}', {
+        attribution: '高德交通流量'
+    });
+
+    var theLayer2 = new L.tileLayer('https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scl=2&style=8&type=11', {
+        attribution: '路网图'
+    });
+
+    // 定义 base layers 和 overlays
+    var baseLayers = {
+        "高德普通地图": gaodeNormal,
+        "高德道路地图": gaodeRoadOnly,
+        "gaodeMap11": gaodeMap11,
+        "高德卫星地图": gaodeSatellite,
+        
+        "高德离线": gaodeTile,
+        "轮廓图": mapTileNone,
+        "腾讯电子地图": mapTile11,
+        "地形渲染图": mapTile22,
+        "mapTile33": mapTile33,
+    };
+
+    var overlays = {
+        "交通流量": trafficLayer,
+        "路网图": theLayer2
+    };
+
+    return {baseLayers, overlays}
+}
+
+
+// last....
+main();
+
+</script>
+
+</html>
