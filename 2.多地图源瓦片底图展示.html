@@ -73,7 +73,7 @@ function main() {
     var url = 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}'
     // 可指定其它默认形式
     // url = './mapdata/gaode_tiles/{z}/{x}/{y}.png' // 离线地图
-    // url = '' // 轮廓图
+    url = '' // 轮廓图
     var gaodeNormal = new L.tileLayer(url, {
         subdomains: ['1', '2', '3', '4'],
         attribution: '&copy; <a href="https://ditu.amap.com/">高德地图</a>'
@@ -204,13 +204,13 @@ function getMultiLayers() {
 
     // 定义 base layers 和 overlays
     var baseLayers = {
+        "轮廓图": mapTileNone,
         "高德普通地图": gaodeNormal,
         "高德道路地图": gaodeRoadOnly,
         "gaodeMap11": gaodeMap11,
         "高德卫星地图": gaodeSatellite,
         
         "高德离线": gaodeTile,
-        "轮廓图": mapTileNone,
         "腾讯电子地图": mapTile11,
         "地形渲染图": mapTile22,
         "mapTile33": mapTile33,
