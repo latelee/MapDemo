@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>leaflet接口示例</title>
+    <link rel="stylesheet" href="mymap/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+</body>
+
+<!-- ============================ -->
+
+
+<script src="mymap/leaflet/dist/leaflet.js"></script>
+
+<script type="text/javascript">
+
+var defaultLatlng = [22.817, 108.366]
+var defaultZoom = 11
+
+function showMap() {
+// 高德地图图层定义
+var url = 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}'
+    var gaodeNormal = new L.tileLayer(url, {
+        subdomains: ['1', '2', '3', '4'],
+        attribution: '&copy; <a href="https://ditu.amap.com/">高德地图</a>'
+    });
+
+    // 初始化地图
+    mymap = new L.Map('map', {zoomControl: false})
+    mymap.setView(defaultLatlng, defaultZoom)
+
+    // 默认加载高德普通地图
+    gaodeNormal.addTo(mymap);
+}
+
+function showDemo() {
+
+    ////////////////////////////
+    // 显示点 marker
+    var marker = L.marker([22.838212,108.316269]).addTo(mymap);
+    marker.bindPopup("<b>广西南宁</b>").openPopup();
+
+    var marker = L.marker([22.738190,108.379440]).addTo(mymap);
+    marker.bindPopup("<b>广西南宁</b>");
+
+    /////////////////////////////////////////
+    // 多条折线
+    var lines = [
+        [
+            [22.857195,108.482437],
+            [22.818593,108.479004],
+            [22.798338,108.405533]
+        ],
+        [
+            [22.821124,108.207092],
+            [22.858460,108.259277],
+            [22.805934,108.279190]
+        ]
+    ];
+    L.polyline(lines, {color: 'blue'}).addTo(mymap)
+
+    // 也可单条线
+    var line1 = [
+        [22.838212,108.316269],
+        [22.807200,108.326569],
+        [22.779347,108.347168],
+        [22.759720,108.352661],
+        [22.738190,108.379440],
+    ]
+    L.polyline(line1, {
+        // 折线颜色（支持 HEX、RGB、颜色名称，如 'red'、'#ff0000'）
+        color: '#ff0000',
+        // 折线宽度（单位：像素）
+        weight: 3,
+        // 折线透明度（0 为完全透明，1 为不透明）。
+        opacity: 1,
+        // 线段端点的形状（可选 'round'、'butt'、'square'）
+        lineCap: 'square',
+        // 线段连接处的形状（可选 'round'、'miter'、'bevel'）
+        lineJoin: 'round',
+        // 虚线样式（如 '10' 表示 10px 实线 + 10px 空白，循环），0 表示实线
+        dashArray: '10',
+        // 虚线起始偏移量（如 '10' 表示从第 10px 开始绘制）。
+        dashOffset: '0',
+        // 折线平滑系数（值越大，路径简化越多，性能优化但精度降低）。
+        smoothFactor: 1,
+        // 是否禁用折线在视图外的裁剪（设为 true 可提升长路径性能）
+        noClip: false,
+        // 自定义 CSS 类名，用于覆盖默认样式
+        className: ''
+    }).addTo(mymap);
+
+    ///////////////////////////////
+    // 圆
+    var circle = L.circle([22.880920,108.414116], {
+        color: 'red', // 边框颜色
+        weight: 1,   // 边框宽度
+        fillColor: '#f03000', // // 填充颜色
+        fillOpacity: 0.2, // 填充透明度
+        radius: 3000 // 半径（米）
+    }).addTo(mymap);
+
+    circle.bindPopup("<font color='red'>我是个圆</font>")
+
+    // 圆形标记（与circle类似）
+    L.circleMarker([22.836313, 108.309059], {
+        radius: 30,           // 半径（像素）
+        fillColor: '#f03000', // 填充颜色
+        color: 'blue',        // 边框颜色
+        weight: 2,            // 边框宽度
+        opacity: 1,           // 边框透明度
+        fillOpacity: 0.2      // 填充透明度
+    }).addTo(mymap);
+
+
+    // 矩形
+    const rectangleBounds = [
+        [22.864787, 108.187866],  // 西南角 (左下角)
+        [22.910333, 108.237991]   // 东北角 (右上角)
+    ];
+    // L.rectangle(边界坐标, 样式选项)
+    rectangle = L.rectangle(rectangleBounds, {
+        // 填充相关样式
+        fillColor: '#ff7800',    // 填充颜色 - 橙色
+        fillOpacity: 0.3,        // 填充透明度 - 30% 透明
+        
+        // 边框相关样式
+        color: '#ff7800',        // 边框颜色 - 与填充色一致
+        weight: 2,               // 边框宽度 - 2像素
+        opacity: 0.8,            // 边框透明度 - 80% 不透明
+        
+        // 其他可选样式
+        dashArray: '5, 5',    // 虚线样式 - 5像素实线, 5像素空白
+        // interactive: true,    // 是否可交互 - 默认true
+        // className: 'custom-rectangle' // 自定义CSS类名
+    }).addTo(mymap);  // 将矩形添加到地图实例
+
+    ///////////////////////////////
+    // 多个多边形
+    var lines = [
+        [
+            [22.870481,108.064957],
+            [22.864155,108.084183],
+            [22.831883,108.109589],
+            [22.840426,108.128128],
+            [22.828086,108.130188],
+            [22.812897,108.114738],
+            [22.802136,108.112335],
+            [22.758770,108.169327],
+            [22.778872,108.202801],
+            [22.813213,108.190269],
+            [22.842958,108.160057],
+            [22.848020,108.118515],
+            [22.875226,108.103409],
+            [22.878389,108.071823],
+        ],
+        [
+            [22.731857,108.477631],
+            [22.724732,108.471622],
+            [22.725999,108.465958],
+            [22.720457,108.461666],
+            [22.713490,108.468361],
+            [22.713490,108.484154],
+            [22.719190,108.489132],
+            [22.729007,108.489132],
+            [22.733282,108.483295],
+        ]
+    ];
+    var polygon = L.polygon(lines, {
+        color: '#ff00ff',
+        // fillColor: '',
+    }).addTo(mymap)
+
+    polygon.bindPopup("<font color='#ff00ff'>我是多边形</font>")
+
+    /////////////////////////////////////////////
+    // 另一种多边形应用
+    var lines2 = [
+        [
+        // 矩形
+        // 此处顺序为 左下->左上->右上->右下，实际不限顺序
+            [22.922350, 108.340988],
+            [23.019298, 108.340988],
+            [23.019298, 108.372574],
+            [22.922350, 108.372574],
+        ],
+        // 三角形
+        [
+            [23.000748, 108.472824],
+            [22.950806, 108.417206],
+            [22.949541, 108.524323],
+        ]
+    ];
+    var polygon = L.polygon(lines2, {
+        color: 'blue',
+        // fillColor: '',
+    }).addTo(mymap)
+
+}
+
+function showMisc() {
+
+    showDistance();
+}
+
+
+// demo 计算两坐标之间距离，似乎是直线距离
+function showDistance() {
+    var lines = [
+        [108.316269, 22.838212],
+        [108.326569, 22.807200],
+        [108.347168, 22.779347],
+        [108.352661, 22.759720],
+        [108.379440, 22.738190]
+    ]
+
+    var totalDistance = 0;
+    for (var i = 0; i < lines.length - 1; i++)
+    {
+        var from = L.latLng(lines[i][1], lines[i][0]);
+        var to = L.latLng(lines[i+1][1], lines[i+1][0]);
+        var dis = from.distanceTo(to);
+        
+        totalDistance += dis
+        // console.log("lldebug ", totalDistance, dis);
+    }
+    totalDistance = totalDistance / 1000
+    totalDistance = totalDistance.toFixed(2)
+    console.log("长度为", totalDistance, "公里");
+}
+
+/////////////
+var popup = L.popup();
+
+function showEvent() {
+    mymap.on('click', function(e){
+        // console.log("纬经度:" + e.latlng.lat + ", " + e.latlng.lng);
+
+        popup.setLatLng(e.latlng)
+        .setContent("You clicked the map at " + e.latlng.toString())
+        .openOn(map);
+    });
+
+}
+
+function main() {
+    showMap();
+
+    showDemo();
+
+    showMisc();
+
+    showEvent();
+}
+
+
+// last....
+main();
+
+</script>
+
+</html>
