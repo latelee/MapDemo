@@ -33,6 +33,53 @@
             height: 150px;
             font-family: monospace;
         }
+
+        /* 右键菜单样式 */
+        .context-menu {
+                position: absolute;
+                z-index: 1000;
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+                padding: 0;
+                display: none;
+                width: 150px;
+                transform: translate(-5px, -5px); /* 使菜单向左上方偏移 */
+        }
+        
+        .context-menu ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .context-menu li {
+            padding: 2px 15px;
+            cursor: default; /* 菜单项也使用箭头光标 */
+            /* border-bottom: 1px solid #eeee; */ /*不要横线*/
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+
+        /* 分组分隔线 - 在第3项后添加较粗的分隔线 */
+        /* .context-menu li:nth-child(3) {
+            border-bottom: 2px solid #cccccc;
+        }
+
+        .context-menu li:nth-child(5) {
+            border-bottom: 2px solid #cccccc;
+        } */
+
+
+        .context-menu li:last-child {
+            border-bottom: none;
+        }
+        
+        .context-menu li:hover {
+            /* background: #efefef; */
+            background: #f7f7f7;
+        }
     </style>
 </head>
 
@@ -54,6 +101,13 @@
         <br><br>
         <button onclick="handleCmd()">提交</button>
         <button onclick="clearMap()">清除图层</button>
+
+        <!-- 右键菜单 -->
+        <div id="context-menu" class="context-menu">
+            <ul>
+                <li data-action="r-show-coords">显示经纬度</li>
+            </ul>
+        </div>
     </div>
 </body>
 

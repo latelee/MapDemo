@@ -171,6 +171,35 @@ function showMap() {
         imperial: false,  // 不显示英尺
         position: 'bottomleft'
     }).addTo(mymap);
+
+    // ------------ 右键事件 开始
+    const contextMenu = document.getElementById('context-menu');
+    let lastRClickEvt = null; // 改为保存事件对象
+    mymap.on('contextmenu', function (e) {
+        // / 阻止默认的右键菜单
+        e.originalEvent.preventDefault();
+
+        lastRClickEvt = e;
+        // 显示自定义右键菜单
+        contextMenu.style.display = 'block';
+        contextMenu.style.left = (e.originalEvent.pageX - 3) + 'px';
+        contextMenu.style.top = (e.originalEvent.pageY - 3) + 'px';
+    }); // end of contextmenu
+
+    // 单击事件  点击其他地方隐藏右键菜单
+    mymap.on('click', function() {
+        contextMenu.style.display = 'none';
+    });
+
+    // 处理菜单点击
+    contextMenu.querySelectorAll('li').forEach(item => {
+        item.addEventListener('click', function(e) {
+            const action = this.getAttribute('data-action');
+            handleRightClick(action, lastRClickEvt);
+            contextMenu.style.display = 'none';
+        });
+    });
+    // ------------ 右键事件 结束
 }
 
 function getProvLayer(geoProv, map, style1) {
@@ -235,4 +264,21 @@ function showBoundray(map) {
     // getProvLayer(naningData, map, myStyle3)
     // 全国轮廓，最后叠加，红色显示
     getProvLayer(geoJsonChinaSimple, map, myStyleRed)
+}
+
+// 右键具体命令实现
+function handleRightClick(action, e) {
+    if (!e || !e.latlng) return;
+    
+    var latlng = e.latlng.lng.toFixed(6) + "," + e.latlng.lat.toFixed(6)
+
+    var zoom = mymap.getZoom()
+
+    const output = document.getElementById('txtOutput');
+    // 根据各命令响应
+    switch(action) {
+        case 'r-show-coords':
+            output.value = `缩放等级: ${zoom} \r\n经纬度信息(经度, 纬度): ${latlng}`
+        break;
+    }
 }
