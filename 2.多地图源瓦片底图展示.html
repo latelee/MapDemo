@@ -1,3 +1,45 @@
+<!-- 
+
+https://zhuanlan.zhihu.com/p/641436984
+
+
+https://jsapi-data3.amap.com/tile/25_07_17_00/v2/poi_region_road_transit/pbf/2/5_1_3?auth_key=1762262328-183184-0-58105a647c95ed030080c7b3c58acaec
+
+https://jsapi-data5.amap.com/tile/25_07_17_00/v2/poi_region_road_transit/pbf/0/49_23_6?auth_key=1762262361-629228-0-213c253b056a3853e2decb746465abe8
+
+
+https://jsapi-data3.amap.com/tile/25_07_17_00/v2/poi_region_road_transit/pbf/0/50_22_6?auth_key=1762262361-937758-0-b788b115804dda024a9cd100cad10ba0
+
+
+https://webrd04.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x=202&y=109&z=8
+
+https://webst01.is.autonavi.com/appmaptile?style=8&x=202&y=109&z=8
+
+失败的
+https://jsapi-data4.amap.com/tile/25_07_17_00/v2/poi_region_road_transit/pbf/0/202_109_8?auth_key=1762262487-418797-0-f0096d1dd15f58be4ae719315105ea62
+
+
+https://jsapi-data4.amap.com/tile/25_07_17_00/v2/building_region_road_transit/pbf/1/204_94_8?auth_key=1762262637-415490-0-19c5c317f748225d4c97efe2c3b24201
+
+https://jsapi-data5.amap.com/tile/25_07_17_00/v2/poi_region_road_transit/pbf/1/204_95_8?auth_key=1762262637-932590-0-2bab63601368e927ed72c4c919d918b9
+
+https://jsapi-data1.amap.com/tile/25_07_17_00/v2/poi_region_road_transit/pbf/1/204_94_8?auth_key=1762262637-591111-0-78b576a154814b3ab2761206b4926bbc
+
+
+
+https://jsapi-data3.amap.com/tile/25_07_17_00/v2/building_region_road_transit/pbf/2/202_94_8?auth_key=1762262645-908784-0-fa16fab65e2bf38ce1cd58c450fd70b8
+
+https://jsapi-data4.amap.com/tile/25_07_17_00/v2/poi_region_road_transit/pbf/0/203_96_8?auth_key=1762262487-418797-0-f0096d1dd15f58be4ae719315105ea62
+
+https://jsapi-data3.amap.com/tile/25_07_17_00/v2/poi_region_road_transit/pbf/1/205_95_8?auth_key=1762262637-944603-0-bbde644557b07201e171e12c0f573a41
+
+https://jsapi-data4.amap.com/tile/25_07_17_00/v2/poi_region_road_transit/pbf/1/205_94_8?auth_key=1762262637-966091-0-c81d7ce2f0701d67297ad60bbbc62223
+
+
+
+202_109_8
+-->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -73,7 +115,7 @@ function main() {
     var url = 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}'
     // 可指定其它默认形式
     // url = './mapdata/gaode_tiles/{z}/{x}/{y}.png' // 离线地图
-    url = '' // 轮廓图
+    // url = '' // 轮廓图
     var gaodeNormal = new L.tileLayer(url, {
         subdomains: ['1', '2', '3', '4'],
         attribution: '&copy; <a href="https://ditu.amap.com/">高德地图</a>'
@@ -143,7 +185,7 @@ function getMultiLayers() {
         attribution: '&copy; <a href="https://ditu.amap.com/">高德地图</a>'
     });
 
-    var gaodeRoadOnly = new L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+    var gaodeRoadOnly = new L.tileLayer('https://webst0{s}.is.autonavi.com/appmaptile?style=8&x={x}&y={y}&z={z}', {
         subdomains: ['1', '2', '3', '4'],
         preferCanvas: true, maxZoom: 18, minZoom: 1,
         attribution: '&copy; <a href="https://ditu.amap.com/">高德道路地图</a>'
@@ -199,7 +241,7 @@ function getMultiLayers() {
     });
 
     var theLayer2 = new L.tileLayer('https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scl=2&style=8&type=11', {
-        attribution: '路网图'
+        attribution: '高德路网图'
     });
 
     // 定义 base layers 和 overlays
@@ -217,8 +259,8 @@ function getMultiLayers() {
     };
 
     var overlays = {
-        "交通流量": trafficLayer,
-        "路网图": theLayer2
+        "高德交通流量": trafficLayer,
+        "高德路网图": theLayer2
     };
 
     return {baseLayers, overlays}

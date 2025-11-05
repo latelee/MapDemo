@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>地图综合示例</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #inputPanel { 
+            position: absolute; 
+            top: 10px; 
+            left: 10px; 
+            width: 180px; 
+            background: white; 
+            padding: 10px; 
+            z-index: 1000;
+            border: 1px solid #ccc;
+        }
+        #txtInput {
+            width: 100%;
+            height: 150px;
+            font-family: monospace;
+        }
+        #txtOutput {
+            width: 100%;
+            height: 150px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div id="inputPanel">
+        一个输入框 <textarea id="txtInput" placeholder="请输入内容..."></textarea>
+        一个输出框<textarea id="txtOutput" placeholder="请等待内容输出..."></textarea>
+        <select id="functionSelect" onchange="onFunctionChange()">
+            <option value="坐标定位">坐标定位</option>
+            <option value="绘制圆形">绘制圆形</option>
+            <option value="绘制矩形">绘制矩形</option>
+            <option value="绘制折线">绘制折线</option>
+            <option value="绘制多边形">绘制多边形</option>
+            <option value="显示GeoJSON-默认">显示GeoJSON-默认</option>
+            <option value="显示GeoJSON-自定义">显示GeoJSON-自定义</option>
+        </select>
+
+        <br><br>
+        <button onclick="handleCmd()">提交</button>
+        <button onclick="clearMap()">清除图层</button>
+    </div>
+</body>
+
+<link rel="stylesheet" href="mymap/leaflet/dist/leaflet.css" />
+<script src="mymap/leaflet/dist/leaflet.js"></script>
+
+<script src="utils.js?v=liafdsah"></script>
+
+<!-- 本地geojson，直接引入-->
+<script src="mymap/data/china.js"></script>
+<script src="mymap/data/china_simple.js"></script>
+<script src="mymap/data/gxData.js"></script>
+<script src="mymap/data/naningData.js"></script>
+
+<script src="mymap/data/450000-广西壮族自治区.js"></script>
+
+<script type="text/javascript">
+
+//////////////////////////////////
+
+var currentLayer = null;
+
+const multiLayers = [];
+
+// 清除所有图层
+function clearAllLayers() {
+    multiLayers.forEach(layer => {
+        if (layer && mymap.hasLayer(layer)) {
+            mymap.removeLayer(layer);
+        }
+    });
+    multiLayers.length = 0;
+}
+
+// 添加图层
+function addToLayers(layer) {
+    if (layer) {
+        multiLayers.push(layer);
+        mymap.addLayer(layer);
+    }
+}
+
+clearAllLayers(); // 刷新时，先清除
+
+// 本函数仅是显示输入示例，无实例用处
+function onFunctionChange() {
+    const select = document.getElementById('functionSelect');
+    const input = document.getElementById('txtInput');
+    const output = document.getElementById('txtOutput');
+
+    input.placeholder = "使用说明见下框，可复制进行测试"
+    
+    switch(select.value) {
+    case '坐标定位':
+        output.value = '请输入坐标 [经度, 纬度]\n示例：108.331032, 22.829035';
+        break;
+    case '绘制圆形':
+        output.value = '请输入圆心坐标经纬度和半径（单位为米），以逗号隔开\n示例：108.414116,22.880920, 3000';
+        break;
+    case '绘制矩形':
+        output.value = '请输入矩形左下角、右上角2组经纬度字符串，以逗号隔开\n示例：104.450893, 20.899288, 112.06185, 26.385566';
+        break;
+    case '绘制折线':
+        output.value = `请输入折线经纬度字符串数组，每组用分号隔开\n格式：lng,lat;lng,lat;\n示例：108.482437,22.857195;
+108.479004,22.818593;
+108.405533,22.798338;`;
+        break;
+    case '绘制多边形':
+        output.value = `请输入多边形经纬度字符串数组，每组用分号隔开\n格式：lng,lat;lng,lat;示例：108.064957,22.870481;
+108.084183,22.864155;
+108.109589,22.831883;
+108.128128,22.840426;
+108.130188,22.828086;
+108.114738,22.812897;
+108.112335,22.802136;
+108.169327,22.758770;
+108.202801,22.778872;
+108.190269,22.813213;
+108.160057,22.842958;
+108.118515,22.848020;
+108.103409,22.875226;
+108.071823,22.878389;
+`;
+        break;
+    case '显示GeoJSON-默认':
+        output.value = '请输入 GeoJSON 数据...\n示例：{"type":"FeatureCollection","features":[...]}';
+        break;
+    case '显示GeoJSON-自定义':
+        output.value = '请输入 GeoJSON 数据...\n示例：{"type":"FeatureCollection","features":[...]}';
+        break;
+    }
+}
+
+// 统一处理命令
+function handleCmd() {
+    const select = document.getElementById('functionSelect');
+    const input = document.getElementById('txtInput').value;
+    const output = document.getElementById('txtOutput');
+    var info = "未未定返回信息"
+
+    if (input=="") {
+        document.getElementById('txtOutput').value = "输入内容为空";
+        return;
+    }
+
+    // 先处理自定义的字符串
+    var info = handleCustomCmd(input);
+    if (info != "")
+    {
+        output.value = info;
+        return;
+    }
+
+    try {
+        switch(select.value) {
+        case '坐标定位':
+            info = flyToLocation(input);
+            break;
+        case '绘制圆形':
+            info = drawCircle(input);
+            break;
+        case '绘制矩形':
+            info = drawRectangle(input);
+            break;
+        case '绘制折线':
+            info = drawPolyLine(input);
+            break;
+        case '绘制多边形':
+            info = drawPolygon(input);
+            break;
+        case '显示GeoJSON-默认':
+            info = showGeoJSON(input);
+            break;
+        case '显示GeoJSON-自定义':
+            info = showMyGeoJSON(input);
+            break;
+        }
+        
+        output.value = info;
+    } catch (error) {
+        output.value = `错误: ${error.message}`;
+    }
+}
+
+function handleCustomCmd(inputStr) {
+    var info = ""
+    try {
+        switch(inputStr) {
+        case 'foo':
+            info = ""
+            break;
+        default:
+            info = ""
+            break;
+        }
+    } catch (error) {
+        info = `处理自定义命令错误: ${error.message}`;
+    }
+
+    return info
+}
+
+function showGeoJSON(inputStr) {
+    try {
+        const geojsonData = JSON.parse(inputStr);
+        currentLayer = L.geoJSON(geojsonData).addTo(mymap);
+
+        addToLayers(currentLayer);
+        
+        // 自动调整地图视野到恰当的位置
+        mymap.fitBounds(currentLayer.getBounds());
+
+        return "GeoJSON 加载成功";
+    } catch (error) {
+        return 'GeoJSON 格式错误: ' + error.message;
+    }
+}
+
+function showMyGeoJSON(inputStr) {
+    try {
+        const geojsonData = JSON.parse(inputStr);
+        // console.log("geojsonData",geojsonData)
+        currentLayer = drawOneLayer(mymap, geojsonData, {color: "#ff0000", weight: 2})
+
+        addToLayers(currentLayer);
+        
+        // 自动调整地图视野到恰当的位置
+        mymap.fitBounds(currentLayer.getBounds());
+
+        return "GeoJSON 加载成功";
+    } catch (error) {
+        return 'GeoJSON 格式错误: ' + error.message;
+    }
+}
+
+/*
+坐标定位
+支持：
+z,lng,lat  或 lng,lat
+如不指定等级，按当前缩放等级
+*/
+function flyToLocation(inputStr) {
+    // 以当前等级为默认等级
+    z = mymap.getZoom();
+    var lng, lat
+    var vLine = inputStr.split(',')
+    if (vLine.length == 2) {
+        lng = parseFloat(vLine[0]);
+        lat = parseFloat(vLine[1]);
+        
+    } else if (vLine.length == 3) {
+        z = parseInt(vLine[0], 10);
+        lng = parseFloat(vLine[1]);
+        lat = parseFloat(vLine[2]);
+    } else {
+        return '参数不合规'
+    }
+    info = `坐标 ${lng}, ${lat}`
+    const center = [lat, lng]
+    var marker = L.marker(center, {})
+    marker.bindPopup(info)
+    addToLayers(marker)
+
+    mymap.flyTo(center, z)
+
+    return '定位成功'
+}
+
+function drawCircle(inputStr) {
+    console.log('绘制圆形:', inputStr);
+
+    z = mymap.getZoom();
+    var lng, lat, radius;
+    var vLine = inputStr.split(',')
+    if (vLine.length == 3) {
+        lng = parseFloat(vLine[0]);
+        lat = parseFloat(vLine[1]);
+        radius = parseInt(vLine[2], 10);
+    } else {
+        return '参数不合规'
+    }
+
+    var circle = L.circle([lat, lng], {
+        color: 'red', // 边框颜色
+        weight: 1,   // 边框宽度
+        fillColor: '#f03000', // // 填充颜色
+        fillOpacity: 0.2, // 填充透明度
+        radius: radius // 半径（米）
+    })
+
+    addToLayers(circle);
+    mymap.fitBounds(circle.getBounds());
+
+    circle.bindPopup("<font color='red'>我是个圆</font>")
+
+    return '绘制成功'
+}
+
+function drawRectangle(inputStr) {
+    console.log('绘制矩形:', inputStr);
+
+    const object = drawMyRectangle(inputStr, { color: "red", weight: 3})
+
+    addToLayers(object)
+    mymap.fitBounds(object.getBounds());
+
+    return '绘制成功'
+}
+
+function drawPolyLine(inputStr) {
+    console.log('绘制折线:', inputStr);
+
+    const object = drawMyPolyLine(inputStr, { color: "red", weight: 3})
+
+    addToLayers(object)
+    mymap.fitBounds(object.getBounds());
+
+    return '绘制成功'
+}
+
+// 绘制多边形的实现
+function drawPolygon(inputStr) {
+    console.log('绘制多边形:', inputStr);
+
+    const object = drawMyPolygon(inputStr, { color: "red", weight: 3})
+
+    addToLayers(object)
+    mymap.fitBounds(object.getBounds());
+
+    return '绘制成功'
+}
+
+function clearMap() {
+    if (currentLayer) {
+        mymap.removeLayer(currentLayer);
+        currentLayer = null;
+    }
+    clearAllLayers();
+}
+
+function main() {
+    showMap();
+}
+
+// last....
+main();
+
+</script>
+
+</html>
