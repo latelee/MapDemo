@@ -30,9 +30,10 @@ function drawOneLayer(map, geoJson, {color = "#FF0000", weight = 2, dashArray = 
         // geoJsonPoint 为 geoJSON 的点point对象
         // geoJson 的坐标经纬度顺序是：经度、纬度，但到了本函数，似乎会自动转换经纬度顺序
         pointToLayer: function(geoJsonPoint, latlng) {
+            const myIcon = new LeafIcon({iconUrl: 'mymap/images/标注点-红.png'});
             // latlng 自动根据point类型的经纬度传入 像 [22.891922, 111.015295] 的类型
             var marker = L.marker(latlng, {
-                //icon: myIcon, // 可以在此指定图标
+                icon: myIcon, // 可以在此指定图标
             });
             if (geoJsonPoint.properties && geoJsonPoint.properties.name && geoJsonPoint.properties.name != "") {
                 marker.bindPopup(geoJsonPoint.properties.name);
@@ -49,8 +50,9 @@ function drawOneLayer(map, geoJson, {color = "#FF0000", weight = 2, dashArray = 
                     color:  color, // feature.properties.color,
                     weight: weight,
                     opcacity: 0.3,
-                    fillColor: 'transparent', //区域填充颜色
-                    fillOpacity: 0, //区域填充颜色的透明
+                    // fillColor: 'transparent', //区域填充颜色
+                    // fillColor: 'blue',
+                    // fillOpacity: 0.6, //区域填充颜色的透明
                     dashArray: dashArray,
                     // more...
                 };

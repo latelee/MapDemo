@@ -9,7 +9,7 @@ var myPoints =
 	  {
 		"type": "Feature",
 		"properties": {
-		  "name": "<b>广西的广西南宁</b><br>市"
+		  "name": "<b>广西的</b><br>南宁市"
 		},
 		"geometry": {
 		  "type": "Point",
