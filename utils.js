@@ -1,3 +1,21 @@
+// 自定义图标类
+class LeafIcon extends L.Icon {
+    constructor(options = {}) {
+        const defaultOptions = {
+            iconSize: [48, 48],
+            iconAnchor: [24, 48], // 48/2 = 24
+            popupAnchor: [0, -48],
+            shadowSize: [0, 0] // 可选：去除阴影
+        };
+        
+        super({
+            ...defaultOptions,
+            ...options
+        });
+    }
+}
+
+
 /////////////////////////////////////////////////////////////
 
 // 全局map变量
@@ -270,15 +288,25 @@ function showBoundray(map) {
 function handleRightClick(action, e) {
     if (!e || !e.latlng) return;
     
-    var latlng = e.latlng.lng.toFixed(6) + "," + e.latlng.lat.toFixed(6)
+    var orgLatlng = e.latlng;
+    var latlng = orgLatlng.lng.toFixed(6) + "," + orgLatlng.lat.toFixed(6)
 
     var zoom = mymap.getZoom()
 
     const output = document.getElementById('txtOutput');
+
     // 根据各命令响应
     switch(action) {
         case 'r-show-coords':
-            output.value = `缩放等级: ${zoom} \r\n经纬度信息(经度, 纬度): ${latlng}`
+            output.value += `缩放等级: ${zoom} \r\n经纬度信息(经度, 纬度): ${latlng}\r\n`
+        break;
+        case 'r-marker-start':
+            const startIcon = new LeafIcon({iconUrl: 'mymap/images/起点.png'});
+            L.marker(orgLatlng, {icon: startIcon}).addTo(mymap);
+        break;
+        case 'r-marker-end':
+            const endIcon = new LeafIcon({iconUrl: 'mymap/images/终点.png'});
+            L.marker(orgLatlng, {icon: endIcon}).addTo(mymap);
         break;
     }
 }
