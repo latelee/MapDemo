@@ -98,6 +98,7 @@
             <option value="绘制多边形">绘制多边形</option>
             <option value="显示GeoJSON-默认">显示GeoJSON-默认</option>
             <option value="显示GeoJSON-自定义">显示GeoJSON-自定义</option>
+            <option value="显示TopoJSON">显示TopoJSON</option>
         </select>
 
         <br><br>
@@ -117,8 +118,9 @@
 
 <link rel="stylesheet" href="mymap/leaflet/dist/leaflet.css" />
 <script src="mymap/leaflet/dist/leaflet.js"></script>
+<script src="mymap/maptool/topojson-client.min.js"></script>
 
-<script src="utils.js?v=a11"></script>
+<script src="utils.js?v=a22"></script>
 
 <!-- 本地geojson，直接引入-->
 <script src="mymap/data/china.js"></script>
@@ -210,6 +212,9 @@ function onFunctionChange() {
     case '显示GeoJSON-自定义':
         output.value = '请输入 GeoJSON 数据...\n示例：{"type":"FeatureCollection","features":[...]}';
         break;
+    case '显示TopoJSON':
+        output.value = '请输入 TopoJson 数据...\示例';
+        break;
     }
 }
 
@@ -262,6 +267,9 @@ function handleCmd() {
         case '显示GeoJSON-自定义':
             info = showMyGeoJSON(input);
             break;
+        case '显示TopoJSON':
+            info = showMyTopoSON(input);
+        break;
         }
         
         output.value = info;
@@ -309,6 +317,39 @@ function showMyGeoJSON(inputStr) {
         const geojsonData = JSON.parse(inputStr);
         // console.log("geojsonData",geojsonData)
         currentLayer = drawOneLayer(mymap, geojsonData, {color: "#ff0000", weight: 2})
+
+        addToLayers(currentLayer);
+        
+        // 自动调整地图视野到恰当的位置
+        mymap.fitBounds(currentLayer.getBounds());
+
+        return "GeoJSON 加载成功";
+    } catch (error) {
+        return 'GeoJSON 格式错误: ' + error.message;
+    }
+}
+
+// 找到topoJson第一个对象
+function autoConvertTopoToGeo(topoData) {
+    const objectNames = Object.keys(topoData.objects);
+    if (objectNames.length === 0) {
+        throw new Error('TopoJSON 中没有找到任何对象');
+    }
+
+    const objectName = objectNames[0];
+
+    return topojson.feature(topoData, topoData.objects[objectName]);
+}
+
+function showMyTopoSON(inputStr) {
+    try {
+        const topoData = JSON.parse(inputStr);
+
+        const geoJSON = autoConvertTopoToGeo(topoData);
+
+        // console.log("dddd", JSON.stringify(geoJSON))
+
+        currentLayer = drawOneLayer(mymap, geoJSON, {color: "#ff0000", weight: 2})
 
         addToLayers(currentLayer);
         
