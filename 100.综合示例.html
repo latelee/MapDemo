@@ -99,6 +99,7 @@
             <option value="显示GeoJSON-默认">显示GeoJSON-默认</option>
             <option value="显示GeoJSON-自定义">显示GeoJSON-自定义</option>
             <option value="显示TopoJSON">显示TopoJSON</option>
+            <option value="turfjs小功能测试">turfjs小功能测试</option>
         </select>
 
         <br><br>
@@ -119,8 +120,10 @@
 <link rel="stylesheet" href="mymap/leaflet/dist/leaflet.css" />
 <script src="mymap/leaflet/dist/leaflet.js"></script>
 <script src="mymap/maptool/topojson-client.min.js"></script>
+<!-- <script src="mymap/maptool/turf-6.5.0.min.js"></script> -->
+<script src="mymap/maptool/turf-7.2.0.min.js"></script>
 
-<script src="utils.js?v=a22"></script>
+<script src="utils.js?v=a33"></script>
 
 <!-- 本地geojson，直接引入-->
 <script src="mymap/data/china.js"></script>
@@ -215,6 +218,10 @@ function onFunctionChange() {
     case '显示TopoJSON':
         output.value = '请输入 TopoJson 数据...\示例';
         break;
+    case 'turfjs小功能测试':
+        output.value = '本功能固定测试turfs接口';
+        input.value = "任意字符"
+        break;
     }
 }
 
@@ -270,6 +277,9 @@ function handleCmd() {
         case '显示TopoJSON':
             info = showMyTopoSON(input);
         break;
+        case 'turfjs小功能测试':
+        info = showMyTurf(input);
+        break;
         }
         
         output.value = info;
@@ -316,7 +326,7 @@ function showMyGeoJSON(inputStr) {
     try {
         const geojsonData = JSON.parse(inputStr);
         // console.log("geojsonData",geojsonData)
-        currentLayer = drawOneLayer(mymap, geojsonData, {color: "#ff0000", weight: 2})
+        currentLayer = drawOneLayer(geojsonData, {color: "#ff0000", weight: 2})
 
         addToLayers(currentLayer);
         
@@ -349,7 +359,7 @@ function showMyTopoSON(inputStr) {
 
         // console.log("dddd", JSON.stringify(geoJSON))
 
-        currentLayer = drawOneLayer(mymap, geoJSON, {color: "#ff0000", weight: 2})
+        currentLayer = drawOneLayer(geoJSON, {color: "#ff0000", weight: 2})
 
         addToLayers(currentLayer);
         
@@ -520,6 +530,284 @@ function drawPolygon(inputStr) {
     mymap.fitBounds(object.getBounds());
 
     return '绘制成功'
+}
+
+function showMyTurf(inputStr) {
+    var info = "";
+    info += turf_demo1();
+    // info += turf_demo2();
+    // info += turf_demo3();
+    // info += turf_demo4();
+    // info += turf_demo5();
+    return info;
+}
+
+// 简单接口
+function turf_demo1() {
+    var info = ""
+
+    const points = [
+        [108.397293,22.738823],
+        [108.481064,22.724890]
+    ];
+    // 点
+    // 注：turf.point 返回点，第二个参数可指定properties参数，drawOneLayer 函数会自动判断name，故加之
+    const point1 = turf.point(points[0], {name: "五象湖公园"});
+    var pointLayer1 = drawOneLayer(point1);
+    addToLayers(pointLayer1);
+
+    const point2 = turf.point(points[1], {name: "南宁园博园"});
+    var pointLayer2 = drawOneLayer(point2);
+    addToLayers(pointLayer2);
+
+    // 计算两点间距离
+    const disTurf = turf.distance(point1, point2, { units: 'kilometers' });
+    info +=`2点间距离(turfs): ${disTurf.toFixed(3)} 公里\r\n`;
+
+    const disLeaflet = calcDistance(points, "km")
+    info +=`2点间距离(leaflet): ${disLeaflet.toFixed(3)} 公里\r\n`;
+
+    // 线
+    const linePoints = [
+        [108.316269, 22.838212],
+        [108.326569, 22.807200],
+        [108.347168, 22.779347],
+        [108.352661, 22.759720],
+        [108.379440, 22.738190]
+    ];
+
+    var line = turf.lineString(
+        // [
+        //     [108.316269, 22.838212],
+        //     [108.326569, 22.807200],
+        //     [108.347168, 22.779347],
+        //     [108.352661, 22.759720],
+        //     [108.379440, 22.738190]
+        // ],
+        linePoints,
+        {color: "#FF00FF", name: "折线"}
+    );
+    var lineLayer = drawOneLayer(line);
+    addToLayers(lineLayer);
+
+    // 可指定为miles或kilometers，默认后者，可不写
+    var totalDistance = turf.length(line, { units: "kilometers"});
+
+    info += `线段长度: ${totalDistance.toFixed(3)} 公里\r\n`
+    
+    const disLeaflet2 = calcDistance(linePoints, "km")
+    info +=`线段长度(leaflet): ${disLeaflet2.toFixed(3)} 公里\r\n`;
+
+
+    // 面
+    const polygon = turf.polygon(
+        [
+            [
+                [108.3, 22.86], 
+                [108.4, 22.86], 
+                [108.4, 22.9], 
+                [108.3, 22.9], 
+                [108.3, 22.86]
+            ]
+        ], {color: "#0000FF"}
+    );
+
+    var polygonLayer = drawOneLayer(polygon);
+    addToLayers(polygonLayer);
+
+    // 计算面积
+    const area = turf.area(polygon); // 平方米
+    info += `面积: ${area.toFixed(3)} 平方米`;
+
+    return info
+}
+
+function turf_demo2() {
+    var info = ""
+
+    // 最小外接矩形
+    var bbox = turf.bbox(gxGeoJson); // gxGeoJson 在 450000-广西壮族自治区.js 中定义
+    // 从边界框创建多边形
+    var polygon = turf.bboxPolygon(bbox, {}, {color: "#0000FF"});
+    var polygonLayer = drawOneLayer(polygon);
+    addToLayers(polygonLayer);
+
+    info += `广西最小外接矩形为 ${bbox}\r\n`
+
+    // 计算中心点
+    const center = turf.center(gxGeoJson);
+    const latlng = center.geometry.coordinates;
+    const point = turf.point(latlng, {name: "中心点"});
+    var pointLayer = drawOneLayer(point);
+    addToLayers(pointLayer);
+    
+    info += `中心点为 ${latlng}\r\n`
+
+    // 计算总面积
+    var totalArea = turf.area(gxGeoJson);
+    totalArea = totalArea / 10000000000;
+
+    info += `广西总面积 ${totalArea.toFixed(3)} 万平方千米`
+
+    return info
+}
+
+
+// 贝塞尔曲线测试 bezierSpline
+function turf_demo3() {
+    var info = ""
+
+    // 坐标点
+    var points = [
+        [108.390427,22.922982],
+        [108.476257,22.929306],
+        [108.524323,22.895786],
+        [108.500290,22.841376]
+    ];
+    // 原始线
+    var line = turf.lineString(
+        points,
+        {color: "#0000FF", name: "折线"}
+    );
+    addToLayers(drawOneLayer(line));
+
+    var line1 = turf.lineString(
+        points,
+    );
+    var curved = turf.bezierSpline(line1, 
+        {
+            resolution: 1000, 
+            sharpness: 0.5,
+            properties: {color: "#FF0000", name: "折线"}
+        }
+    );
+    addToLayers(drawOneLayer(curved));
+
+    return info
+}
+
+// 空间关系判断
+function turf_demo4() {
+    var info = ""
+
+    const points = [
+        [108.481064,22.724890],
+        [108.397293,22.738823]
+    ];
+    
+    const point1 = turf.point(points[0], {name: "南宁园博园"});
+    addToLayers(drawOneLayer(point1));
+
+    const point2 = turf.point(points[1], {name: "五象湖公园"});
+    addToLayers(drawOneLayer(point2));
+
+    var line1 = turf.lineString(
+        [
+            [108.481064,22.724890],
+            [108.397293,22.738823],
+            [108.369827,22.774599]
+        ], {color: "#0000FF"}
+    );
+    addToLayers(drawOneLayer(line1));
+
+    // 判断点与线的关系
+    const isPointOnLine1 = turf.booleanPointOnLine(point1, line1);
+    // 不在线上的点
+    const outPoint = turf.point([108.45,22.77], {name: "其它点"});
+    addToLayers(drawOneLayer(outPoint));
+    const isPointOnLine2 = turf.booleanPointOnLine(outPoint, line1);
+
+    info += `点1与线1关系：${isPointOnLine1}, 其它与线1关系: ${isPointOnLine2}\r\n`;
+
+    polygon1 = turf.polygon(
+    [
+        [
+            [108.3, 22.86], 
+            [108.4, 22.86], 
+            [108.4, 22.9], 
+            [108.3, 22.9], 
+            [108.3, 22.86]
+        ]
+    ], {color: "#0000FF"}
+    );
+
+    polygon2 = turf.polygon(
+    [
+        [
+            [108.349228,22.918555],
+            [108.378067,22.963451],
+            [108.476257,22.950806],
+            [108.479004,22.893888],
+            [108.440552,22.855929],
+            // [108.417892,22.909701], // 删除此坐标，两多边形相交
+            [108.349228,22.918555]
+        ]
+    ], {color: "#0000FF"}
+    );
+
+    addToLayers(drawOneLayer(polygon1));
+    addToLayers(drawOneLayer(polygon2));
+
+    inPoint = turf.point([108.304596,22.895786], {name: "内点"})
+    addToLayers(drawOneLayer(inPoint));
+
+    const isPointInPoly = turf.booleanPointInPolygon(inPoint, polygon1);
+    const isOverlap = turf.booleanOverlap(polygon1, polygon2);
+
+    info += `点与面关系：${isPointInPoly}, 面与面的关系: ${isOverlap}\r\n`;
+    return info;
+}
+
+/////// 交集、并集、差集
+function turf_demo5() {
+    var info = ""
+
+    polygon1 = turf.polygon(
+    [
+        [
+            [108.3, 22.86], 
+            [108.4, 22.86], 
+            [108.4, 22.9], 
+            [108.3, 22.9], 
+            [108.3, 22.86]
+        ]
+    ], {color: "#0000FF"}
+    );
+
+    polygon2 = turf.polygon(
+    [
+        [
+            [108.325195,22.887562],
+            [108.327942,22.872379],
+            [108.422012,22.864155],
+            [108.446732,22.879971],
+            [108.417892,22.891990],
+            [108.325195,22.887562]
+        ]
+    ], {color: "#0000FF"}
+    );
+
+    // 根据需要决定显示与否
+    addToLayers(drawOneLayer(polygon1));
+    addToLayers(drawOneLayer(polygon2));
+
+
+    // turf 6 版本接口可用
+    // const intersection = turf.intersect(polygon1, polygon2);
+    // 以下为turf 7 版本接口
+    // 交集
+    const intersection = turf.intersect(turf.featureCollection([polygon1, polygon2]), {properties: {color: "#FF0000"}});
+    // 并集
+    const union = turf.union(turf.featureCollection([polygon1, polygon2]), {properties: {color: "#008000"}});
+    // 差集
+    const difference = turf.difference(turf.featureCollection([polygon1, polygon2]), {properties: {color: "#FF0000"}});
+
+    // 根据需要决定显示与否
+    addToLayers(drawOneLayer(intersection));
+    addToLayers(drawOneLayer(union));
+    addToLayers(drawOneLayer(difference));
+
+    return info;
 }
 
 function clearMap() {

@@ -1,3 +1,29 @@
+
+// 计算经纬度数组points的总里程
+function calcDistance(points, units = 'km') {
+    let totalDistance = 0;
+
+    for (let i = 0; i < points.length - 1; i++) {
+        const [lng1, lat1] = points[i];
+        const [lng2, lat2] = points[i + 1];
+        
+        const distance = L.latLng(lat1, lng1).distanceTo(L.latLng(lat2, lng2));
+        totalDistance += distance;
+    }
+
+    // 单位转换
+    const unitConvert = {
+        'm': (d) => d,
+        'km': (d) => d / 1000,
+        'mile': (d) => d / 1609.34
+    };
+    const convert = unitConvert[units] || unitConvert['km'];
+
+    return convert(totalDistance);
+}
+
+/////////////////////////////////////
+
 // 自定义图标类
 class LeafIcon extends L.Icon {
     constructor(options = {}) {
@@ -23,7 +49,7 @@ var mymap = null;
 var defaultLatlng = [22.817, 108.366];
 var defaultZoom = 11;
 
-function drawOneLayer(map, geoJson, {color = "#FF0000", weight = 2, dashArray = ""} = {}) {
+function drawOneLayer(geoJson, {color = "#FF0000", weight = 2, dashArray = ""} = {}) {
     // 加载json数据
     var myLayer = L.geoJSON(geoJson, {
         // 端点
@@ -37,6 +63,7 @@ function drawOneLayer(map, geoJson, {color = "#FF0000", weight = 2, dashArray = 
             });
             if (geoJsonPoint.properties && geoJsonPoint.properties.name && geoJsonPoint.properties.name != "") {
                 marker.bindPopup(geoJsonPoint.properties.name);
+                marker.openPopup(geoJsonPoint.properties.name);
             }
             return marker
         },
@@ -51,7 +78,6 @@ function drawOneLayer(map, geoJson, {color = "#FF0000", weight = 2, dashArray = 
                     weight: weight,
                     opcacity: 0.3,
                     // fillColor: 'transparent', //区域填充颜色
-                    // fillColor: 'blue',
                     // fillOpacity: 0.6, //区域填充颜色的透明
                     dashArray: dashArray,
                     // more...
@@ -63,6 +89,34 @@ function drawOneLayer(map, geoJson, {color = "#FF0000", weight = 2, dashArray = 
     // myLayer.addTo(map)
 
     return myLayer
+}
+
+function drawMarker(point) {
+    // 使用 L.geoJSON 创建 marker
+    const layer = L.geoJSON(point, {
+        pointToLayer: function(feature, latlng) {
+            const myIcon = new LeafIcon({iconUrl: 'mymap/images/标注点-红.png'});
+            return L.marker(latlng, {icon: myIcon});
+        }
+    })
+    
+    // 绑定弹出框
+    layer.eachLayer(function(marker) {
+        const popupContent = point.properties?.name 
+            ? `${point.properties.name}` 
+            : "";
+        if (popupContent) {
+            marker.bindPopup(popupContent);
+        }
+    });
+    
+    return layer;
+}
+
+function openMarkerPopup(layer) {
+    layer.eachLayer(marker => {
+        marker.openPopup();
+    });
 }
 
 /**
