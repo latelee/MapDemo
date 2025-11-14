@@ -100,6 +100,7 @@
             <option value="显示GeoJSON-自定义">显示GeoJSON-自定义</option>
             <option value="显示TopoJSON">显示TopoJSON</option>
             <option value="turfjs小功能测试">turfjs小功能测试</option>
+            <option value="turfjs简化路线">turfjs简化路线</option>
         </select>
 
         <br><br>
@@ -222,6 +223,9 @@ function onFunctionChange() {
         output.value = '本功能固定测试turfs接口';
         input.value = "任意字符"
         break;
+    case 'turfjs简化路线':
+        output.value = '请输入 GeoJSON 数据...\n示例：{"type":"FeatureCollection","features":[...]}';
+        break;
     }
 }
 
@@ -278,7 +282,10 @@ function handleCmd() {
             info = showMyTopoSON(input);
         break;
         case 'turfjs小功能测试':
-        info = showMyTurf(input);
+            info = showMyTurf(input);
+        break;
+        case 'turfjs简化路线':
+            info = showSimplifyTurf(input);
         break;
         }
         
@@ -808,6 +815,22 @@ function turf_demo5() {
     addToLayers(drawOneLayer(difference));
 
     return info;
+}
+
+
+function showSimplifyTurf(inputStr) {
+    console.log('简化路线:', inputStr);
+    const geojsonData = JSON.parse(inputStr);
+
+    var options = { tolerance: 0.0001, highQuality: true, mutate: true };
+    var simplified = turf.simplify(geojsonData, options);
+    
+    var object = drawOneLayer(simplified);
+    addToLayers(object);
+    mymap.fitBounds(object.getBounds());
+
+    var ouput = JSON.stringify(simplified, null, 2)
+    return `简化成功\r\n${ouput}`
 }
 
 function clearMap() {
